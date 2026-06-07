@@ -1,12 +1,8 @@
 'use client'
-import {useState, useEffect} from "react";
-import {createClient} from "@/utils/supabase/client"
-// icons
-import {PiNoteBlankFill} from "react-icons/pi";
-import {HiPencilAlt} from "react-icons/hi";
-import {FaTrash} from "react-icons/fa";
-
-// components
+import { useState, useEffect } from "react";
+import { createClient } from "@/utils/supabase/client"
+import { HiPencilAlt } from "react-icons/hi";
+import { FaTrash } from "react-icons/fa";
 
 import AddSidang from "@/app/Components/AddSidang";
 import IndexPage from "@/app/Components/IndexPages";
@@ -20,17 +16,21 @@ type SidData = {
     tgl_pemberitahuan: string;
     tgl_bht: string;
     tgl_kekuatan: string;
-    keterangan?: string; // optional karena bisa kosong
+    keterangan?: string;
 };
 
+// Update tipe props untuk menerima info pagination
 type TablesProps = {
     sidangData: SidData[];
+    currentPage: number;
+    totalItems: number;
+    itemsPerPage: number;
 };
 
-export default function Tables({sidangData}: TablesProps) {
+export default function Tables({ sidangData, currentPage, totalItems, itemsPerPage }: TablesProps) {
     const [rows, setRows] = useState<SidData[]>([]);
+
     useEffect(() => {
-        console.log("Data dari Supabase:", sidangData);
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setRows(sidangData);
     }, [sidangData]);
@@ -38,26 +38,22 @@ export default function Tables({sidangData}: TablesProps) {
     const getBHTStatus = (tglBHT: string) => {
         const today = new Date();
         const bhtDate = new Date(tglBHT);
-
         today.setHours(0, 0, 0, 0);
         bhtDate.setHours(0, 0, 0, 0);
-
         if (bhtDate > today) return "belum BHT";
         if (bhtDate < today) return "terlewat";
-        return "sudah BHT"; // sama persis dengan hari ini
+        return "sudah BHT";
     };
 
-// mapping warna
     const getBHTColor = (status: string) => {
         if (status === "belum BHT") return "bg-bluish p-1 rounded-sm";
         if (status === "sudah BHT") return "bg-true p-1 rounded-sm";
         return "bg-false p-1 rounded-sm text-red-50";
     };
 
-
     const supabase = createClient();
     const handleDelete = async (id: number) => {
-        const {error} = await supabase
+        const { error } = await supabase
             .from("sidang_list")
             .delete()
             .eq("id", id);
@@ -66,7 +62,6 @@ export default function Tables({sidangData}: TablesProps) {
             console.error("Gagal hapus data:", error.message);
             alert("Delete gagal: " + error.message);
         } else {
-            console.log(`Data dengan id ${id} berhasil dihapus`);
             setRows((prev) => prev.filter((item) => item.id !== id));
         }
     };
@@ -78,7 +73,6 @@ export default function Tables({sidangData}: TablesProps) {
                 <h6 className="font-semibold text-3xl">Sistem Urusan Sidang Umum</h6>
             </div>
 
-            {/* tables */}
             <div className="font-poppins bg-white w-300">
                 <div className="overflow-x-auto relative">
                     <table className={'w-full'}>
@@ -105,24 +99,14 @@ export default function Tables({sidangData}: TablesProps) {
                                 <td className="px-4 py-3">{item.tgl_bht}</td>
                                 <td className="px-4 py-3">
                                     <div className="flex justify-center">
-                                        <div
-                                            className={` w-28 text-center ${getBHTColor(getBHTStatus(item.tgl_bht))}`}
-                                        >
+                                        <div className={` w-28 text-center ${getBHTColor(getBHTStatus(item.tgl_bht))}`}>
                                             {getBHTStatus(item.tgl_bht)}
                                         </div>
-
                                     </div>
                                 </td>
                                 <td className="px-4 py-3">
                                     <div className="flex justify-center">
-                                        {item.keterangan && (
-                                            <div
-
-                                                className=""
-                                            >
-                                                {item.keterangan}
-                                            </div>
-                                        )}
+                                        {item.keterangan && <div className="">{item.keterangan}</div>}
                                     </div>
                                 </td>
                                 <td className="px-4 py-3">
@@ -142,7 +126,13 @@ export default function Tables({sidangData}: TablesProps) {
                 </div>
                 <AddSidang/>
             </div>
-            <IndexPage/>
+
+            {/* Oper data aktual pagination ke IndexPage */}
+            <IndexPage
+                currentPage={currentPage}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+            />
         </div>
     );
 }

@@ -8,7 +8,7 @@ import TablesWrapper from "@/app/Components/TablesWrapper";
 //type
 type state = "table" | "input"
 
-export default function Home(){
+export default function Home({ searchParams }: { searchParams: Promise<{ page?: string }> }){
   return (
       <div className="grid grid-cols-12 h-screen">
         {/*Thumbnail*/}
@@ -17,7 +17,7 @@ export default function Home(){
         </div>
       {/*  Main*/}
         <div className={'col-span-9'}>
-            <TablesWrapper/>
+            <TablesWrapper searchParams={searchParams}/>
         </div>
       </div>
   )
