@@ -1,8 +1,9 @@
 import { IoMdAddCircle } from "react-icons/io";
+import Link from "next/link";
 export default function AddSidang() {
     return(
         <div className="mt-6 flex justify-end">
-            <button
+            <Link href={"/formpage"}
                 type="button"
                 className="
       flex items-center gap-2
@@ -18,7 +19,7 @@ export default function AddSidang() {
             >
                 <span>Tambah Sidang</span>
                 <IoMdAddCircle size={20} />
-            </button>
+            </Link>
         </div>
     )
 }
