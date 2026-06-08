@@ -19,7 +19,6 @@ type SidData = {
     keterangan?: string;
 };
 
-// Update tipe props untuk menerima info pagination
 type TablesProps = {
     sidangData: SidData[];
     currentPage: number;
@@ -35,20 +34,33 @@ export default function Tables({ sidangData, currentPage, totalItems, itemsPerPa
         setRows(sidangData);
     }, [sidangData]);
 
-    const getBHTStatus = (tglBHT: string) => {
+    // FIX 1: Perbaikan logika tanggal & tipe return string yang konsisten
+    const getBHTStatus = (tglBHT: string | null | undefined): string => {
+        if (!tglBHT || tglBHT.trim() === "") return "Belum ada BHT";
+
         const today = new Date();
         const bhtDate = new Date(tglBHT);
+
+        // Validasi jika string tanggal rusak/invalid
+        if (isNaN(bhtDate.getTime())) return "Tanggal Invalid";
+
         today.setHours(0, 0, 0, 0);
         bhtDate.setHours(0, 0, 0, 0);
-        if (bhtDate > today) return "belum BHT";
-        if (bhtDate < today) return "terlewat";
-        return "sudah BHT";
+
+        const todayTime = today.getTime();
+        const bhtTime = bhtDate.getTime();
+
+        if (bhtTime > todayTime) return "belum BHT";
+        if (bhtTime < todayTime) return "terlewat";
+        return "sudah BHT"; // Menggunakan s kecil agar sinkron dengan getBHTColor
     };
 
+    // FIX 2: Sinkronisasi text case dengan getBHTStatus
     const getBHTColor = (status: string) => {
         if (status === "belum BHT") return "bg-bluish p-1 rounded-sm";
         if (status === "sudah BHT") return "bg-true p-1 rounded-sm";
-        return "bg-false p-1 rounded-sm text-red-50";
+        if (status === "terlewat") return "bg-false p-1 rounded-sm text-red-50";
+        return "bg-orange-600 p-1 rounded-sm text-red-50"; // Untuk 'Belum ada BHT' atau 'Tanggal Invalid'
     };
 
     const supabase = createClient();
@@ -90,44 +102,49 @@ export default function Tables({ sidangData, currentPage, totalItems, itemsPerPa
                         </tr>
                         </thead>
                         <tbody className="divide-y divide-bluish/20 text-sm">
-                        {rows.map((item) => (
-                            <tr key={item.id} className="hover:bg-slate-50">
-                                <td className="px-4 py-3">{item.no_perkara}</td>
-                                <td className="px-4 py-3">{item.jenis_perkara}</td>
-                                <td className="px-4 py-3">{item.tgl_putus}</td>
-                                <td className="px-4 py-3">{item.tgl_pemberitahuan}</td>
-                                <td className="px-4 py-3">{item.tgl_bht}</td>
-                                <td className="px-4 py-3">
-                                    <div className="flex justify-center">
-                                        <div className={` w-28 text-center ${getBHTColor(getBHTStatus(item.tgl_bht))}`}>
-                                            {getBHTStatus(item.tgl_bht)}
+                        {rows.map((item) => {
+                            // FIX 3: Simpan status ke variabel agar tidak memanggil fungsi 2 kali (lebih optimal)
+                            const statusBHT = getBHTStatus(item.tgl_bht);
+                            const warnaBHT = getBHTColor(statusBHT);
+
+                            return (
+                                <tr key={item.id} className="hover:bg-slate-50">
+                                    <td className="px-4 py-3">{item.no_perkara}</td>
+                                    <td className="px-4 py-3">{item.jenis_perkara}</td>
+                                    <td className="px-4 py-3">{item.tgl_putus ? item.tgl_putus : "-----"}</td>
+                                    <td className="px-4 py-3">{item.tgl_pemberitahuan ? item.tgl_pemberitahuan : "-----"}</td>
+                                    <td className="px-4 py-3">{item.tgl_bht ? item.tgl_bht : "-----"}</td>
+                                    <td className="px-4 py-3">
+                                        <div className="flex justify-center">
+                                            <div className={`w-28 text-center ${warnaBHT}`}>
+                                                {statusBHT}
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td className="px-4 py-3">
-                                    <div className="flex justify-center">
-                                        {item.keterangan && <div className="">{item.keterangan}</div>}
-                                    </div>
-                                </td>
-                                <td className="px-4 py-3">
-                                    <button>
-                                        <HiPencilAlt size={18} className="text-bluish"/>
-                                    </button>
-                                </td>
-                                <td className="px-4 py-3">
-                                    <button onClick={() => handleDelete(item.id)} className={'cursor-pointer'}>
-                                        <FaTrash size={16} className="text-false"/>
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <div className="flex justify-center">
+                                            {item.keterangan && <div className="">{item.keterangan}</div>}
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <button>
+                                            <HiPencilAlt size={18} className="text-bluish"/>
+                                        </button>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <button onClick={() => handleDelete(item.id)} className={'cursor-pointer'}>
+                                            <FaTrash size={16} className="text-false"/>
+                                        </button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                         </tbody>
                     </table>
                 </div>
                 <AddSidang/>
             </div>
 
-            {/* Oper data aktual pagination ke IndexPage */}
             <IndexPage
                 currentPage={currentPage}
                 totalItems={totalItems}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {useRouter} from "next/navigation";
+import { useRouter } from "next/navigation";
 import { CiCalendarDate } from "react-icons/ci";
 import { IoMdArrowDropdownCircle, IoMdAddCircle } from "react-icons/io";
 import Calendar from "react-calendar";
@@ -12,7 +12,50 @@ import "react-calendar/dist/Calendar.css";
 type CalendarValue = Date | null | [Date | null, Date | null];
 
 const jenisPerkaraOptions = ["Cerai gugat", "Cerai talak", "Isbat nikah", "Waris"];
-const keteranganOptions = ["perlu dibuat akte cerai", "sudah ada akte cerai", "proses banding"];
+const keteranganOptions = [
+    "Asal Usul Anak",
+    "Cerai Gugat",
+    "Cerai Talak",
+    "Dispensasi Kawin",
+    "Ekonomi Syariah",
+    "Ganti Rugi terhadap Wali",
+    "Gugatan Memperoleh Akta Perdamaian Atas Kesepakatan Perdamaian di Luar Pengadilan",
+    "Hak - hak bekas istri/kewajiban bekas Suami",
+    "Harta Bersama",
+    "Hibah",
+    "Isbat Rukyat Hilal",
+    "Izin Kawin",
+    "Izin Poligami",
+    "Kelalaian Atas Kewajiban Suami / Istri",
+    "Kewarisan",
+    "Lain-Lain",
+    "Mahar Terhutang",
+    "Nafkah Anak Oleh Ibu karena Ayah tidak mampu",
+    "Nafkah Anak Pasca Perceraian",
+    "P3HP/Penetapan Ahli Waris",
+    "Pembatalan Arbitrase Syariah",
+    "Pembatalan Perkawinan",
+    "Pencabutan Kekuasaan Orang Tua",
+    "Pencabutan Kekuasaan Wali",
+    "Pencegahan Perkawinan",
+    "Pengangkatan Anak",
+    "Pengesahan Anak",
+    "Pengesahan Perkawinan/Istbat Nikah",
+    "Penguasaan Anak",
+    "Penolakan Kawin Campuran",
+    "Penolakan Perkawinan oleh PPN",
+    "Penunjukan orang lain sebagai Wali oleh Pengadilan",
+    "Perbaikan Identitas Putusan dan Akta Cerai",
+    "Perjanjian Perkawinan/Perjanjian Kawin",
+    "Perwalian",
+    "Shadaqoh",
+    "Wakaf",
+    "Wali Adhol",
+    "Wasiat",
+    "perlu dibuat akte cerai",
+    "sudah ada akte cerai",
+    "proses banding"
+];
 
 function DatePickerField({
                              label,
@@ -21,7 +64,7 @@ function DatePickerField({
                          }: {
     label: string;
     value: Date | null;
-    onChange: (val: Date) => void;
+    onChange: (val: Date | null) => void; // Updated type here to support null
 }) {
     const [open, setOpen] = useState(false);
 
@@ -93,9 +136,10 @@ export default function MainForm() {
     const [noPerkara, setNoPerkara] = useState("");
     const [jenisPerkara, setJenisPerkara] = useState(jenisPerkaraOptions[0]);
     const [keterangan, setKeterangan] = useState(keteranganOptions[0]);
-    const [tglPutus, setTglPutus] = useState<Date | null>(new Date());
-    const [tglPemberitahuan, setTglPemberitahuan] = useState<Date | null>(new Date());
-    const [tglKekuatan, setTglKekuatan] = useState<Date | null>(new Date());
+
+    // Default values set to null here
+    const [tglPutus, setTglPutus] = useState<Date | null>(null);
+    const [tglPemberitahuan, setTglPemberitahuan] = useState<Date | null>(null);
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -103,7 +147,7 @@ export default function MainForm() {
         let tglBht: string | null = null;
         if (tglPemberitahuan) {
             const bhtDate = new Date(tglPemberitahuan);
-            bhtDate.setDate(bhtDate.getDate() + 14);
+            bhtDate.setDate(bhtDate.getDate() + 15);
             tglBht = bhtDate.toISOString().split("T")[0]; // format YYYY-MM-DD
         }
 
@@ -112,8 +156,8 @@ export default function MainForm() {
                 no_perkara: noPerkara,
                 jenis_perkara: jenisPerkara,
                 keterangan,
-                tgl_putus: tglPutus?.toISOString().split("T")[0],
-                tgl_pemberitahuan: tglPemberitahuan?.toISOString().split("T")[0],
+                tgl_putus: tglPutus ? tglPutus.toISOString().split("T")[0] : null,
+                tgl_pemberitahuan: tglPemberitahuan ? tglPemberitahuan.toISOString().split("T")[0] : null,
                 tgl_bht: tglBht
             },
         ]);
@@ -122,7 +166,7 @@ export default function MainForm() {
             console.error("Gagal tambah data:", error.message);
             alert("Error: " + error.message);
         } else {
-            router.push("/")
+            router.push("/");
         }
     };
 
@@ -163,8 +207,6 @@ export default function MainForm() {
 
                     {/* Tgl Pemberitahuan Putus */}
                     <DatePickerField label="Tgl Pemberitahuan Putus" value={tglPemberitahuan} onChange={setTglPemberitahuan} />
-
-
                 </div>
             </div>
             <div className="mt-6 flex justify-end">
