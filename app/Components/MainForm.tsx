@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { CiCalendarDate } from "react-icons/ci";
 import { IoMdArrowDropdownCircle, IoMdAddCircle } from "react-icons/io";
@@ -12,14 +12,13 @@ import "react-calendar/dist/Calendar.css";
 
 type CalendarValue = Date | null | [Date | null, Date | null];
 
-// Tipe data untuk properti params/props awal
 export interface InitialFormProps {
     id?: string | number;
     no_perkara?: string;
     jenis_perkara?: string;
     keterangan?: string;
-    tgl_putus?: string | null; // format YYYY-MM-DD dari DB
-    tgl_pemberitahuan?: string | null; // format YYYY-MM-DD dari DB
+    tgl_putus?: string | null;
+    tgl_pemberitahuan?: string | null;
 }
 
 const jenisPerkaraOptions = [
@@ -52,8 +51,7 @@ function DatePickerField({
     onChange: (val: Date | null) => void;
 }) {
     const [open, setOpen] = useState(false);
-
-    const formatted = value ? value.toLocaleDateString("id-ID") : "";
+    const formatted = value && !isNaN(value.getTime()) ? value.toLocaleDateString("id-ID") : "";
 
     const handleCalendarChange = (val: CalendarValue) => {
         if (val && !Array.isArray(val)) {
@@ -75,7 +73,7 @@ function DatePickerField({
                 </div>
                 {open && (
                     <div className="absolute z-50 mt-1 rounded-md shadow-lg bg-white">
-                        <Calendar onChange={handleCalendarChange} value={value} />
+                        <Calendar onChange={handleCalendarChange} value={value || undefined} />
                     </div>
                 )}
             </div>
@@ -123,26 +121,44 @@ export default function MainForm({ initialData }: MainFormProps) {
     const supabase = createClient();
     const router = useRouter();
 
-    // Deteksi apakah form dalam mode edit berdasarkan keberadaan ID
     const isEditMode = !!initialData?.id;
 
-    // Fungsi pembantu untuk konversi string YYYY-MM-DD dari DB menjadi Objek Date
+    // Fungsi pembantu menangani string "null" dari URL dan validasi tanggal
     const parseDbDate = (dateStr?: string | null): Date | null => {
-        if (!dateStr) return null;
-        return new Date(dateStr);
+        if (!dateStr || dateStr === "null" || dateStr === "undefined") return null;
+        const parsed = new Date(dateStr);
+        return isNaN(parsed.getTime()) ? null : parsed;
     };
 
-    // Inisialisasi state menggunakan data dari params (initialData)
-    const [noPerkara, setNoPerkara] = useState(initialData?.no_perkara || "");
-    const [jenisPerkara, setJenisPerkara] = useState(initialData?.jenis_perkara || jenisPerkaraOptions[0]);
-    const [keterangan, setKeterangan] = useState(initialData?.keterangan || keteranganOptions[0]);
+    // State awal form
+    const [noPerkara, setNoPerkara] = useState("");
+    const [jenisPerkara, setJenisPerkara] = useState(jenisPerkaraOptions[0]);
+    const [keterangan, setKeterangan] = useState(keteranganOptions[0]);
+    const [tglPutus, setTglPutus] = useState<Date | null>(null);
+    const [tglPemberitahuan, setTglPemberitahuan] = useState<Date | null>(null);
 
-    const [tglPutus, setTglPutus] = useState<Date | null>(parseDbDate(initialData?.tgl_putus));
-    const [tglPemberitahuan, setTglPemberitahuan] = useState<Date | null>(parseDbDate(initialData?.tgl_pemberitahuan));
+    // KUNCI PERBAIKAN: Sync data begitu initialData dari URL masuk/berubah
+    useEffect(() => {
+        if (initialData) {
+            if (initialData.no_perkara) setNoPerkara(initialData.no_perkara);
 
-    // Fungsi konversi format id-ID (DD/MM/YYYY) ke format database (YYYY-MM-DD)
+            if (initialData.jenis_perkara) {
+                const decodedJenis = decodeURIComponent(initialData.jenis_perkara);
+                if (jenisPerkaraOptions.includes(decodedJenis)) setJenisPerkara(decodedJenis);
+            }
+
+            if (initialData.keterangan) {
+                const decodedKet = decodeURIComponent(initialData.keterangan);
+                if (keteranganOptions.includes(decodedKet)) setKeterangan(decodedKet);
+            }
+
+            setTglPutus(parseDbDate(initialData.tgl_putus));
+            setTglPemberitahuan(parseDbDate(initialData.tgl_pemberitahuan));
+        }
+    }, [initialData]);
+
     const convertToDbDate = (date: Date | null): string | null => {
-        if (!date) return null;
+        if (!date || isNaN(date.getTime())) return null;
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
@@ -169,7 +185,6 @@ export default function MainForm({ initialData }: MainFormProps) {
         };
 
         if (isEditMode) {
-            // JIKA MODE EDIT: Jalankan logika UPDATE
             const { error } = await supabase
                 .from("sidang_list")
                 .update(payload)
@@ -182,7 +197,6 @@ export default function MainForm({ initialData }: MainFormProps) {
                 router.push("/");
             }
         } else {
-            // JIKA MODE BARU: Jalankan logika INSERT
             const { error } = await supabase
                 .from("sidang_list")
                 .insert([payload]);
