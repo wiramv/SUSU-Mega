@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client"
 import { HiPencilAlt } from "react-icons/hi";
 import { FaTrash } from "react-icons/fa";
+import Link from 'next/link'
+
 
 import AddSidang from "@/app/Components/AddSidang";
 import IndexPage from "@/app/Components/IndexPages";
@@ -127,9 +129,9 @@ export default function Tables({ sidangData, currentPage, totalItems, itemsPerPa
                                         </div>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <button>
+                                        <Link href={"/"}>
                                             <HiPencilAlt size={18} className="text-bluish"/>
-                                        </button>
+                                        </Link>
                                     </td>
                                     <td className="px-4 py-3">
                                         <button onClick={() => handleDelete(item.id)} className={'cursor-pointer'}>
@@ -150,6 +152,7 @@ export default function Tables({ sidangData, currentPage, totalItems, itemsPerPa
                 totalItems={totalItems}
                 itemsPerPage={itemsPerPage}
             />
+
         </div>
     );
 }

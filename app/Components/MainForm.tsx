@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CiCalendarDate } from "react-icons/ci";
 import { IoMdArrowDropdownCircle, IoMdAddCircle } from "react-icons/io";
+import { MdEdit } from "react-icons/md";
 import Calendar from "react-calendar";
 import { createClient } from "@/utils/supabase/client";
 
@@ -11,50 +12,34 @@ import "react-calendar/dist/Calendar.css";
 
 type CalendarValue = Date | null | [Date | null, Date | null];
 
-const jenisPerkaraOptions = ["Cerai gugat", "Cerai talak", "Isbat nikah", "Waris","Asal Usul Anak",
-    "Cerai Gugat",
-    "Cerai Talak",
-    "Dispensasi Kawin",
-    "Ekonomi Syariah",
-    "Ganti Rugi terhadap Wali",
-    "Gugatan Memperoleh Akta Perdamaian Atas Kesepakatan Perdamaian di Luar Pengadilan",
-    "Hak - hak bekas istri/kewajiban bekas Suami",
-    "Harta Bersama",
-    "Hibah",
-    "Isbat Rukyat Hilal",
-    "Izin Kawin",
-    "Izin Poligami",
-    "Kelalaian Atas Kewajiban Suami / Istri",
-    "Kewarisan",
-    "Lain-Lain",
-    "Mahar Terhutang",
-    "Nafkah Anak Oleh Ibu karena Ayah tidak mampu",
-    "Nafkah Anak Pasca Perceraian",
-    "P3HP/Penetapan Ahli Waris",
-    "Pembatalan Arbitrase Syariah",
-    "Pembatalan Perkawinan",
-    "Pencabutan Kekuasaan Orang Tua",
-    "Pencabutan Kekuasaan Wali",
-    "Pencegahan Perkawinan",
-    "Pengangkatan Anak",
-    "Pengesahan Anak",
-    "Pengesahan Perkawinan/Istbat Nikah",
-    "Penguasaan Anak",
-    "Penolakan Kawin Campuran",
-    "Penolakan Perkawinan oleh PPN",
-    "Penunjukan orang lain sebagai Wali oleh Pengadilan",
-    "Perbaikan Identitas Putusan dan Akta Cerai",
-    "Perjanjian Perkawinan/Perjanjian Kawin",
-    "Perwalian",
-    "Shadaqoh",
-    "Wakaf",
-    "Wali Adhol",
-    "Wasiat",
-    "perlu dibuat akte cerai",
-    "sudah ada akte cerai",
-    "proses banding"];
+// Tipe data untuk properti params/props awal
+export interface InitialFormProps {
+    id?: string | number;
+    no_perkara?: string;
+    jenis_perkara?: string;
+    keterangan?: string;
+    tgl_putus?: string | null; // format YYYY-MM-DD dari DB
+    tgl_pemberitahuan?: string | null; // format YYYY-MM-DD dari DB
+}
+
+const jenisPerkaraOptions = [
+    "Cerai gugat", "Cerai talak", "Isbat nikah", "Waris", "Asal Usul Anak",
+    "Cerai Gugat", "Cerai Talak", "Dispensasi Kawin", "Ekonomi Syariah",
+    "Ganti Rugi terhadap Wali", "Gugatan Memperoleh Akta Perdamaian Atas Kesepakatan Perdamaian di Luar Pengadilan",
+    "Hak - hak bekas istri/kewajiban bekas Suami", "Harta Bersama", "Hibah",
+    "Isbat Rukyat Hilal", "Izin Kawin", "Izin Poligami", "Kelalaian Atas Kewajiban Suami / Istri",
+    "Kewarisan", "Lain-Lain", "Mahar Terhutang", "Nafkah Anak Oleh Ibu karena Ayah tidak mampu",
+    "Nafkah Anak Pasca Perceraian", "P3HP/Penetapan Ahli Waris", "Pembatalan Arbitrase Syariah",
+    "Pembatalan Perkawinan", "Pencabutan Kekuasaan Orang Tua", "Pencabutan Kekuasaan Wali",
+    "Pencegahan Perkawinan", "Pengangkatan Anak", "Pengesahan Anak", "Pengesahan Perkawinan/Istbat Nikah",
+    "Penguasaan Anak", "Penolakan Kawin Campuran", "Penolakan Perkawinan oleh PPN",
+    "Penunjukan orang lain sebagai Wali oleh Pengadilan", "Perbaikan Identitas Putusan dan Akta Cerai",
+    "Perjanjian Perkawinan/Perjanjian Kawin", "Perwalian", "Shadaqoh", "Wakaf", "Wali Adhol",
+    "Wasiat", "perlu dibuat akte cerai", "sudah ada akte cerai", "proses banding"
+];
+
 const keteranganOptions = [
-    "perlu dibuat akte cerai", "Sudah dibuat akta cerai", "proses upaya hukum", "perlu dibuat phs ikrar","tidak dibuat akte cerai"
+    "perlu dibuat akte cerai", "Sudah dibuat akta cerai", "proses upaya hukum", "perlu dibuat phs ikrar", "tidak dibuat akte cerai"
 ];
 
 function DatePickerField({
@@ -68,7 +53,6 @@ function DatePickerField({
 }) {
     const [open, setOpen] = useState(false);
 
-    // Mengubah tampilan input sesuai format Indonesia (DD/MM/YYYY)
     const formatted = value ? value.toLocaleDateString("id-ID") : "";
 
     const handleCalendarChange = (val: CalendarValue) => {
@@ -131,23 +115,38 @@ function SelectField({
     );
 }
 
-export default function MainForm() {
+interface MainFormProps {
+    initialData?: InitialFormProps;
+}
+
+export default function MainForm({ initialData }: MainFormProps) {
     const supabase = createClient();
-
-    const [noPerkara, setNoPerkara] = useState("");
-    const [jenisPerkara, setJenisPerkara] = useState(jenisPerkaraOptions[0]);
-    const [keterangan, setKeterangan] = useState(keteranganOptions[0]);
-
-    const [tglPutus, setTglPutus] = useState<Date | null>(null);
-    const [tglPemberitahuan, setTglPemberitahuan] = useState<Date | null>(null);
     const router = useRouter();
+
+    // Deteksi apakah form dalam mode edit berdasarkan keberadaan ID
+    const isEditMode = !!initialData?.id;
+
+    // Fungsi pembantu untuk konversi string YYYY-MM-DD dari DB menjadi Objek Date
+    const parseDbDate = (dateStr?: string | null): Date | null => {
+        if (!dateStr) return null;
+        return new Date(dateStr);
+    };
+
+    // Inisialisasi state menggunakan data dari params (initialData)
+    const [noPerkara, setNoPerkara] = useState(initialData?.no_perkara || "");
+    const [jenisPerkara, setJenisPerkara] = useState(initialData?.jenis_perkara || jenisPerkaraOptions[0]);
+    const [keterangan, setKeterangan] = useState(initialData?.keterangan || keteranganOptions[0]);
+
+    const [tglPutus, setTglPutus] = useState<Date | null>(parseDbDate(initialData?.tgl_putus));
+    const [tglPemberitahuan, setTglPemberitahuan] = useState<Date | null>(parseDbDate(initialData?.tgl_pemberitahuan));
 
     // Fungsi konversi format id-ID (DD/MM/YYYY) ke format database (YYYY-MM-DD)
     const convertToDbDate = (date: Date | null): string | null => {
         if (!date) return null;
-        const indoDateStr = date.toLocaleDateString("id-ID"); // Hasil: "DD/MM/YYYY"
-        const [day, month, year] = indoDateStr.split("/");
-        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`; // Hasil: "YYYY-MM-DD"
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -156,26 +155,44 @@ export default function MainForm() {
         let tglBht: string | null = null;
         if (tglPemberitahuan) {
             const bhtDate = new Date(tglPemberitahuan);
-            bhtDate.setDate(bhtDate.getDate() + 14);
+            bhtDate.setDate(bhtDate.getDate() + 15);
             tglBht = convertToDbDate(bhtDate);
         }
 
-        const { error } = await supabase.from("sidang_list").insert([
-            {
-                no_perkara: noPerkara,
-                jenis_perkara: jenisPerkara,
-                keterangan,
-                tgl_putus: convertToDbDate(tglPutus),
-                tgl_pemberitahuan: convertToDbDate(tglPemberitahuan),
-                tgl_bht: tglBht
-            },
-        ]);
+        const payload = {
+            no_perkara: noPerkara,
+            jenis_perkara: jenisPerkara,
+            keterangan,
+            tgl_putus: convertToDbDate(tglPutus),
+            tgl_pemberitahuan: convertToDbDate(tglPemberitahuan),
+            tgl_bht: tglBht
+        };
 
-        if (error) {
-            console.error("Gagal tambah data:", error.message);
-            alert("Error: " + error.message);
+        if (isEditMode) {
+            // JIKA MODE EDIT: Jalankan logika UPDATE
+            const { error } = await supabase
+                .from("sidang_list")
+                .update(payload)
+                .eq("id", initialData!.id);
+
+            if (error) {
+                console.error("Gagal mengupdate data:", error.message);
+                alert("Error: " + error.message);
+            } else {
+                router.push("/");
+            }
         } else {
-            router.push("/");
+            // JIKA MODE BARU: Jalankan logika INSERT
+            const { error } = await supabase
+                .from("sidang_list")
+                .insert([payload]);
+
+            if (error) {
+                console.error("Gagal tambah data:", error.message);
+                alert("Error: " + error.message);
+            } else {
+                router.push("/");
+            }
         }
     };
 
@@ -223,8 +240,8 @@ export default function MainForm() {
                     type="submit"
                     className="flex items-center gap-2 rounded-md border border-bluish px-4 py-2 text-sm font-medium text-bluish transition hover:bg-bluish hover:text-white"
                 >
-                    <span>Submit</span>
-                    <IoMdAddCircle size={20} />
+                    <span>{isEditMode ? "Update" : "Submit"}</span>
+                    {isEditMode ? <MdEdit size={20} /> : <IoMdAddCircle size={20} />}
                 </button>
             </div>
         </form>
