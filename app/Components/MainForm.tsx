@@ -11,9 +11,7 @@ import "react-calendar/dist/Calendar.css";
 
 type CalendarValue = Date | null | [Date | null, Date | null];
 
-const jenisPerkaraOptions = ["Cerai gugat", "Cerai talak", "Isbat nikah", "Waris"];
-const keteranganOptions = [
-    "Asal Usul Anak",
+const jenisPerkaraOptions = ["Cerai gugat", "Cerai talak", "Isbat nikah", "Waris","Asal Usul Anak",
     "Cerai Gugat",
     "Cerai Talak",
     "Dispensasi Kawin",
@@ -54,7 +52,9 @@ const keteranganOptions = [
     "Wasiat",
     "perlu dibuat akte cerai",
     "sudah ada akte cerai",
-    "proses banding"
+    "proses banding"];
+const keteranganOptions = [
+    "perlu dibuat akte cerai", "Sudah dibuat akta cerai", "proses upaya hukum", "perlu dibuat phs ikrar","tidak dibuat akte cerai"
 ];
 
 function DatePickerField({
@@ -64,11 +64,12 @@ function DatePickerField({
                          }: {
     label: string;
     value: Date | null;
-    onChange: (val: Date | null) => void; // Updated type here to support null
+    onChange: (val: Date | null) => void;
 }) {
     const [open, setOpen] = useState(false);
 
-    const formatted = value ? value.toLocaleDateString("sv-SE") : "";
+    // Mengubah tampilan input sesuai format Indonesia (DD/MM/YYYY)
+    const formatted = value ? value.toLocaleDateString("id-ID") : "";
 
     const handleCalendarChange = (val: CalendarValue) => {
         if (val && !Array.isArray(val)) {
@@ -137,18 +138,26 @@ export default function MainForm() {
     const [jenisPerkara, setJenisPerkara] = useState(jenisPerkaraOptions[0]);
     const [keterangan, setKeterangan] = useState(keteranganOptions[0]);
 
-    // Default values set to null here
     const [tglPutus, setTglPutus] = useState<Date | null>(null);
     const [tglPemberitahuan, setTglPemberitahuan] = useState<Date | null>(null);
     const router = useRouter();
 
+    // Fungsi konversi format id-ID (DD/MM/YYYY) ke format database (YYYY-MM-DD)
+    const convertToDbDate = (date: Date | null): string | null => {
+        if (!date) return null;
+        const indoDateStr = date.toLocaleDateString("id-ID"); // Hasil: "DD/MM/YYYY"
+        const [day, month, year] = indoDateStr.split("/");
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`; // Hasil: "YYYY-MM-DD"
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
         let tglBht: string | null = null;
         if (tglPemberitahuan) {
             const bhtDate = new Date(tglPemberitahuan);
-            bhtDate.setDate(bhtDate.getDate() + 15);
-            tglBht = bhtDate.toISOString().split("T")[0]; // format YYYY-MM-DD
+            bhtDate.setDate(bhtDate.getDate() + 14);
+            tglBht = convertToDbDate(bhtDate);
         }
 
         const { error } = await supabase.from("sidang_list").insert([
@@ -156,8 +165,8 @@ export default function MainForm() {
                 no_perkara: noPerkara,
                 jenis_perkara: jenisPerkara,
                 keterangan,
-                tgl_putus: tglPutus ? tglPutus.toISOString().split("T")[0] : null,
-                tgl_pemberitahuan: tglPemberitahuan ? tglPemberitahuan.toISOString().split("T")[0] : null,
+                tgl_putus: convertToDbDate(tglPutus),
+                tgl_pemberitahuan: convertToDbDate(tglPemberitahuan),
                 tgl_bht: tglBht
             },
         ]);
