@@ -129,7 +129,7 @@ export default function Tables({ sidangData, currentPage, totalItems, itemsPerPa
                                         </div>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <Link href={`/formpage?id=${item.id}&no_perkara=${encodeURIComponent(item.no_perkara)}&jenis_perkara=${encodeURIComponent(item.jenis_perkara)}&keterangan=${encodeURIComponent(item.keterangan)}&tgl_putus=${item.tgl_putus}&tgl_pemberitahuan=${item.tgl_pemberitahuan}`}>
+                                        <Link href={`/formpage?id=${item.id}&no_perkara=${encodeURIComponent(item.no_perkara)}&jenis_perkara=${encodeURIComponent(item.jenis_perkara)}&keterangan=${encodeURIComponent(item.keterangan || '')}&tgl_putus=${item.tgl_putus}&tgl_pemberitahuan=${item.tgl_pemberitahuan}`}>
                                             <HiPencilAlt size={18} className="text-bluish"/>
                                         </Link>
                                     </td>
